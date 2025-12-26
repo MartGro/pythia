@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Generator - Orakel Für 2026</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/fitty@3/dist/fitty.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 id="bingo-title" class="title" contenteditable="true" role="textbox" aria-label="Bingo card title">NAME's Orakel Für 2026</h1>
+
+        <div class="bingo-container">
+            <div class="bingo-grid" role="grid" aria-label="4x4 Bingo Grid">
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 1 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 2 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 3 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 4 of 16"></div>
+
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 5 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 6 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 7 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 8 of 16"></div>
+
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 9 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 10 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 11 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 12 of 16"></div>
+
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 13 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 14 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 15 of 16"></div>
+                <div class="bingo-cell" contenteditable="true" role="gridcell" aria-label="Bingo cell 16 of 16"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="download-btn" aria-label="Download bingo card as PNG image">
+                📥 Download Image
+            </button>
+            <button id="delete-all-btn" aria-label="Delete all bingo cell contents and title">
+                🗑️ Delete All
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
