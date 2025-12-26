@@ -50,6 +50,9 @@ body {
     word-wrap: break-word;
     overflow-wrap: break-word;
     color: var(--text-color);
+    direction: ltr;
+    unicode-bidi: embed;
+    writing-mode: horizontal-tb;
 }
 
 .title:hover {
@@ -89,9 +92,7 @@ body {
     background-color: var(--cell-bg);
     border: 2px solid var(--cell-border);
     padding: var(--spacing-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     text-align: center;
     cursor: text;
     transition: all 0.2s ease;
@@ -99,16 +100,20 @@ body {
     font-size: 1.5rem;
     font-weight: 500;
     min-height: 80px;
-    max-height: 100%;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
     -webkit-user-select: text;
     -webkit-touch-callout: default;
-    white-space: normal;
-    line-height: 1.2;
+    white-space: pre-wrap;
+    line-height: 1.3;
     direction: ltr;
+    unicode-bidi: embed;
+    writing-mode: horizontal-tb;
+    box-sizing: border-box;
 }
 
 .bingo-cell:hover {

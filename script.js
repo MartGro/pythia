@@ -1,3 +1,7 @@
+// Store fitty instances globally
+let cellFittyInstances = [];
+let titleFittyInstance = null;
+
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
     initializeBingoApp();
@@ -12,18 +16,31 @@ function initializeBingoApp() {
     // Initialize fitty for cells and title (with error handling)
     try {
         if (typeof fitty !== 'undefined') {
-            fitty('.bingo-cell', {
-                minSize: 10,
-                maxSize: 40,
-                multiLine: true,
-                hasParent: true
+            // Initialize fitty for each cell individually
+            cells.forEach(cell => {
+                const instance = fitty(cell, {
+                    minSize: 8,
+                    maxSize: 40,
+                    multiLine: true,
+                    observeMutations: {
+                        subtree: true,
+                        childList: true,
+                        characterData: true
+                    }
+                });
+                cellFittyInstances.push(instance);
             });
 
-            fitty('.title', {
+            // Initialize fitty for title
+            titleFittyInstance = fitty(titleElement, {
                 minSize: 14,
                 maxSize: 48,
                 multiLine: false,
-                hasParent: true
+                observeMutations: {
+                    subtree: true,
+                    childList: true,
+                    characterData: true
+                }
             });
         }
     } catch (error) {
@@ -38,13 +55,16 @@ function initializeBingoApp() {
         // Input event for text changes
         cell.addEventListener('input', (e) => {
             sanitizeContent(e.target);
-            try {
-                if (typeof fitty !== 'undefined') {
-                    fitty('.bingo-cell');
+            // Use requestAnimationFrame to ensure DOM is updated before fitting
+            requestAnimationFrame(() => {
+                try {
+                    if (cellFittyInstances[index]) {
+                        cellFittyInstances[index].fit();
+                    }
+                } catch (error) {
+                    console.warn('Fitty error on cell input:', error);
                 }
-            } catch (error) {
-                console.warn('Fitty error on cell input:', error);
-            }
+            });
             saveBingoState(titleElement, cells);
         });
 
@@ -68,8 +88,8 @@ function initializeBingoApp() {
     titleElement.addEventListener('input', (e) => {
         sanitizeContent(e.target);
         try {
-            if (typeof fitty !== 'undefined') {
-                fitty('.title');
+            if (titleFittyInstance) {
+                titleFittyInstance.fit();
             }
         } catch (error) {
             console.warn('Fitty error on title input:', error);
@@ -98,9 +118,33 @@ function initializeBingoApp() {
  * Sanitize cell content by removing unwanted HTML elements
  */
 function sanitizeContent(element) {
-    // Remove any HTML tags and keep only text
-    let text = element.innerText || element.textContent || '';
-    element.textContent = text;
+    // Only sanitize if there are actual HTML elements
+    if (element.children.length > 0) {
+        // Save cursor position
+        const selection = window.getSelection();
+        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+        const cursorOffset = range ? range.startOffset : 0;
+        const anchorNode = range ? range.startContainer : null;
+
+        // Remove any HTML tags and keep only text
+        let text = element.innerText || element.textContent || '';
+        element.textContent = text;
+
+        // Restore cursor position
+        if (anchorNode && element.firstChild) {
+            try {
+                const newRange = document.createRange();
+                const textNode = element.firstChild;
+                const offset = Math.min(cursorOffset, textNode.length);
+                newRange.setStart(textNode, offset);
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            } catch (e) {
+                // If restoration fails, just continue
+            }
+        }
+    }
 }
 
 /**
@@ -145,9 +189,13 @@ function loadBingoState(titleElement, cells) {
             // Re-fit all cells after loading
             setTimeout(() => {
                 try {
-                    if (typeof fitty !== 'undefined') {
-                        fitty('.bingo-cell');
-                        fitty('.title');
+                    cellFittyInstances.forEach(instance => {
+                        if (instance) {
+                            instance.fit();
+                        }
+                    });
+                    if (titleFittyInstance) {
+                        titleFittyInstance.fit();
                     }
                 } catch (error) {
                     console.warn('Fitty error on load:', error);
@@ -178,9 +226,13 @@ function deleteAll(titleElement, cells) {
 
         // Re-fit text
         try {
-            if (typeof fitty !== 'undefined') {
-                fitty('.title');
-                fitty('.bingo-cell');
+            cellFittyInstances.forEach(instance => {
+                if (instance) {
+                    instance.fit();
+                }
+            });
+            if (titleFittyInstance) {
+                titleFittyInstance.fit();
             }
         } catch (error) {
             console.warn('Fitty error on delete:', error);
@@ -261,14 +313,16 @@ async function downloadAsImage() {
 
 // Handle window resize to re-fit text
 window.addEventListener('resize', () => {
-    if (document.querySelector('.bingo-cell')) {
-        try {
-            if (typeof fitty !== 'undefined') {
-                fitty('.bingo-cell');
-                fitty('.title');
+    try {
+        cellFittyInstances.forEach(instance => {
+            if (instance) {
+                instance.fit();
             }
-        } catch (error) {
-            console.warn('Fitty error on resize:', error);
+        });
+        if (titleFittyInstance) {
+            titleFittyInstance.fit();
         }
+    } catch (error) {
+        console.warn('Fitty error on resize:', error);
     }
 });
