@@ -9,18 +9,24 @@ function initializeBingoApp() {
     const deleteAllBtn = document.getElementById('delete-all-btn');
     const downloadBtn = document.getElementById('download-btn');
 
-    // Initialize fitty for cells and title
-    fitty('.bingo-cell', {
-        minSize: 12,
-        maxSize: 48,
-        multiLine: true
-    });
+    // Initialize fitty for cells and title (with error handling)
+    try {
+        if (typeof fitty !== 'undefined') {
+            fitty('.bingo-cell', {
+                minSize: 12,
+                maxSize: 48,
+                multiLine: true
+            });
 
-    fitty('.title', {
-        minSize: 16,
-        maxSize: 48,
-        multiLine: false
-    });
+            fitty('.title', {
+                minSize: 16,
+                maxSize: 48,
+                multiLine: false
+            });
+        }
+    } catch (error) {
+        console.warn('Fitty.js error:', error);
+    }
 
     // Load saved state from localStorage
     loadBingoState(titleElement, cells);
@@ -30,7 +36,13 @@ function initializeBingoApp() {
         // Input event for text changes
         cell.addEventListener('input', (e) => {
             sanitizeContent(e.target);
-            fitty(e.target);
+            try {
+                if (typeof fitty !== 'undefined') {
+                    fitty('.bingo-cell');
+                }
+            } catch (error) {
+                console.warn('Fitty error on cell input:', error);
+            }
             saveBingoState(titleElement, cells);
         });
 
@@ -53,7 +65,13 @@ function initializeBingoApp() {
     // Add event listeners to title
     titleElement.addEventListener('input', (e) => {
         sanitizeContent(e.target);
-        fitty(e.target);
+        try {
+            if (typeof fitty !== 'undefined') {
+                fitty('.title');
+            }
+        } catch (error) {
+            console.warn('Fitty error on title input:', error);
+        }
         saveBingoState(titleElement, cells);
     });
 
@@ -111,7 +129,6 @@ function loadBingoState(titleElement, cells) {
             // Load title
             if (state.title) {
                 titleElement.textContent = state.title;
-                fitty(titleElement);
             }
 
             // Load cells
@@ -121,13 +138,19 @@ function loadBingoState(titleElement, cells) {
                         cell.textContent = state.cells[index];
                     }
                 });
-
-                // Re-fit all cells after loading
-                setTimeout(() => {
-                    fitty('.bingo-cell');
-                    fitty('.title');
-                }, 100);
             }
+
+            // Re-fit all cells after loading
+            setTimeout(() => {
+                try {
+                    if (typeof fitty !== 'undefined') {
+                        fitty('.bingo-cell');
+                        fitty('.title');
+                    }
+                } catch (error) {
+                    console.warn('Fitty error on load:', error);
+                }
+            }, 100);
         } catch (error) {
             console.error('Error loading saved state:', error);
         }
@@ -145,13 +168,21 @@ function deleteAll(titleElement, cells) {
     if (confirmed) {
         // Clear title
         titleElement.textContent = "NAME's Orakel Für 2026";
-        fitty(titleElement);
 
         // Clear all cells
         cells.forEach(cell => {
             cell.textContent = '';
-            fitty(cell);
         });
+
+        // Re-fit text
+        try {
+            if (typeof fitty !== 'undefined') {
+                fitty('.title');
+                fitty('.bingo-cell');
+            }
+        } catch (error) {
+            console.warn('Fitty error on delete:', error);
+        }
 
         // Clear localStorage
         localStorage.removeItem('bingoState');
@@ -229,7 +260,13 @@ async function downloadAsImage() {
 // Handle window resize to re-fit text
 window.addEventListener('resize', () => {
     if (document.querySelector('.bingo-cell')) {
-        fitty('.bingo-cell');
-        fitty('.title');
+        try {
+            if (typeof fitty !== 'undefined') {
+                fitty('.bingo-cell');
+                fitty('.title');
+            }
+        } catch (error) {
+            console.warn('Fitty error on resize:', error);
+        }
     }
 });
