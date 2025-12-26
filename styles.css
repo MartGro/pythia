@@ -108,7 +108,7 @@ body {
     -webkit-touch-callout: default;
     white-space: normal;
     line-height: 1.2;
-    direction: auto;
+    direction: ltr;
 }
 
 .bingo-cell:hover {
