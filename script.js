@@ -13,15 +13,17 @@ function initializeBingoApp() {
     try {
         if (typeof fitty !== 'undefined') {
             fitty('.bingo-cell', {
-                minSize: 12,
-                maxSize: 48,
-                multiLine: true
+                minSize: 10,
+                maxSize: 40,
+                multiLine: true,
+                hasParent: true
             });
 
             fitty('.title', {
-                minSize: 16,
+                minSize: 14,
                 maxSize: 48,
-                multiLine: false
+                multiLine: false,
+                hasParent: true
             });
         }
     } catch (error) {
