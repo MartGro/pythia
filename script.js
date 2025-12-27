@@ -30,27 +30,9 @@ function initializeBingoApp() {
         loadCellData(savedState);
     }
 
-    const cells = document.querySelectorAll('.bingo-cell');
-
-    // Initialize fitty for cells and title (with error handling)
+    // Initialize fitty for title
     try {
         if (typeof fitty !== 'undefined') {
-            // Initialize fitty for each cell individually
-            cells.forEach(cell => {
-                const instance = fitty(cell, {
-                    minSize: 8,
-                    maxSize: 40,
-                    multiLine: true,
-                    observeMutations: {
-                        subtree: true,
-                        childList: true,
-                        characterData: true
-                    }
-                });
-                cellFittyInstances.push(instance);
-            });
-
-            // Initialize fitty for title
             titleFittyInstance = fitty(titleElement, {
                 minSize: 14,
                 maxSize: 48,
@@ -65,43 +47,6 @@ function initializeBingoApp() {
     } catch (error) {
         console.warn('Fitty.js error:', error);
     }
-
-    // Load saved state from localStorage
-    loadBingoState(titleElement, cells);
-
-    // Add event listeners to all cells
-    cells.forEach((cell, index) => {
-        // Input event for text changes
-        cell.addEventListener('input', (e) => {
-            sanitizeContent(e.target);
-            // Use requestAnimationFrame to ensure DOM is updated before fitting
-            requestAnimationFrame(() => {
-                try {
-                    if (cellFittyInstances[index]) {
-                        cellFittyInstances[index].fit();
-                    }
-                } catch (error) {
-                    console.warn('Fitty error on cell input:', error);
-                }
-            });
-            saveBingoState(titleElement, cells);
-        });
-
-        // Paste event to handle formatting
-        cell.addEventListener('paste', (e) => {
-            e.preventDefault();
-            const text = e.clipboardData.getData('text/plain');
-            document.execCommand('insertText', false, text);
-        });
-
-        // Handle contenteditable quirks
-        cell.addEventListener('keydown', (e) => {
-            // Allow Ctrl+A to select all in cell
-            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-                e.stopPropagation();
-            }
-        });
-    });
 
     // Add event listeners to title
     titleElement.addEventListener('input', (e) => {
