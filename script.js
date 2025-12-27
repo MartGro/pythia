@@ -559,13 +559,44 @@ async function downloadAsImage() {
         // Show controls again
         controls.style.display = 'flex';
 
-        // Open image in new tab as HTML page (works better on mobile)
-        canvas.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            const newWindow = window.open();
-            newWindow.document.write('<img src="' + url + '" style="max-width:100%; height:auto; display:block;">');
-            newWindow.document.close();
-        }, 'image/png');
+        // Convert canvas to blob
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+
+        // Generate filename from title
+        const title = document.getElementById('bingo-title').textContent || 'bingo';
+        const filename = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+
+        // Try Web Share API first (great for mobile)
+        if (navigator.share && navigator.canShare && blob) {
+            try {
+                const file = new File([blob], filename, { type: 'image/png' });
+                const shareData = {
+                    files: [file],
+                    title: title
+                };
+
+                if (navigator.canShare(shareData)) {
+                    await navigator.share(shareData);
+                    return;
+                }
+            } catch (shareError) {
+                // If share was cancelled or failed, fall through to download
+                console.log('Share cancelled or failed, falling back to download');
+            }
+        }
+
+        // Fallback: Direct download (works on all platforms)
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the URL after a short delay
+        setTimeout(() => URL.revokeObjectURL(url), 100);
 
     } catch (error) {
         console.error('Error downloading image:', error);
