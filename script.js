@@ -261,29 +261,55 @@ async function downloadAsImage() {
             await document.fonts.ready;
         }
 
-        // Create a wrapper to capture title + grid
+        // Create a wrapper to capture title + grid at 1024x1024
+        const targetSize = 1024;
+        const padding = 40;
+        const gridSize = targetSize - (padding * 2);
+
         const captureElement = document.createElement('div');
-        captureElement.style.padding = '20px';
+        captureElement.style.width = `${targetSize}px`;
+        captureElement.style.height = `${targetSize}px`;
+        captureElement.style.padding = `${padding}px`;
         captureElement.style.backgroundColor = '#f9f9f9';
         captureElement.style.borderRadius = '8px';
+        captureElement.style.display = 'flex';
+        captureElement.style.flexDirection = 'column';
+        captureElement.style.justifyContent = 'center';
+        captureElement.style.gap = '20px';
+        captureElement.style.boxSizing = 'border-box';
 
         // Clone title and grid
         const titleClone = document.getElementById('bingo-title').cloneNode(true);
         const gridClone = grid.cloneNode(true);
 
+        // Ensure cloned elements are properly sized
+        titleClone.style.width = '100%';
+        titleClone.style.textAlign = 'center';
+        titleClone.style.fontSize = '48px';
+        titleClone.style.marginBottom = '0';
+
+        gridClone.style.width = `${gridSize}px`;
+        gridClone.style.height = `${gridSize}px`;
+        gridClone.style.maxWidth = 'none';
+        gridClone.style.aspectRatio = '1 / 1';
+
         captureElement.appendChild(titleClone);
         captureElement.appendChild(gridClone);
 
-        // Temporarily add to DOM for rendering
+        // Temporarily add to DOM for rendering (positioned off-screen)
+        captureElement.style.position = 'absolute';
+        captureElement.style.left = '-9999px';
         document.body.appendChild(captureElement);
 
-        // Capture the canvas
+        // Capture the canvas at exact 1024x1024
         const canvas = await html2canvas(captureElement, {
             backgroundColor: '#ffffff',
-            scale: 2,
+            scale: 1,
             logging: false,
             useCORS: true,
-            allowTaint: true
+            allowTaint: true,
+            width: targetSize,
+            height: targetSize
         });
 
         // Remove temporary element
