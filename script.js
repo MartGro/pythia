@@ -184,7 +184,8 @@ function initializeBingoApp() {
         } catch (error) {
             console.warn('Fitty error on title input:', error);
         }
-        saveBingoState(titleElement, cells);
+        const currentCells = document.querySelectorAll('.bingo-cell');
+        saveBingoState(titleElement, currentCells);
     });
 
     titleElement.addEventListener('paste', (e) => {
@@ -195,7 +196,8 @@ function initializeBingoApp() {
 
     // Delete all button
     deleteAllBtn.addEventListener('click', () => {
-        deleteAll(titleElement, cells);
+        const currentCells = document.querySelectorAll('.bingo-cell');
+        deleteAll(titleElement, currentCells);
     });
 
     // Download button
