@@ -559,11 +559,9 @@ async function downloadAsImage() {
         // Show controls again
         controls.style.display = 'flex';
 
-        // Convert canvas to blob and open in new tab
-        canvas.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-        }, 'image/png');
+        // Open canvas image directly in new tab
+        const imageUrl = canvas.toDataURL('image/png');
+        window.open(imageUrl, '_blank');
 
     } catch (error) {
         console.error('Error downloading image:', error);
