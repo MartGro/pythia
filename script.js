@@ -559,9 +559,13 @@ async function downloadAsImage() {
         // Show controls again
         controls.style.display = 'flex';
 
-        // Open canvas image directly in new tab
-        const imageUrl = canvas.toDataURL('image/png');
-        window.open(imageUrl, '_blank');
+        // Open image in new tab as HTML page (works better on mobile)
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const newWindow = window.open();
+            newWindow.document.write('<img src="' + url + '" style="max-width:100%; height:auto; display:block;">');
+            newWindow.document.close();
+        }, 'image/png');
 
     } catch (error) {
         console.error('Error downloading image:', error);
