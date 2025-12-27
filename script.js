@@ -559,12 +559,45 @@ async function downloadAsImage() {
         // Show controls again
         controls.style.display = 'flex';
 
-        // Create download link
-        const link = document.createElement('a');
+        // Convert canvas to blob for mobile share compatibility
         const timestamp = new Date().toISOString().slice(0, 10);
-        link.download = `bingo-orakel-${timestamp}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+        const filename = `bingo-orakel-${timestamp}.png`;
+
+        canvas.toBlob(async (blob) => {
+            // Try Web Share API first (mobile)
+            if (navigator.share && navigator.canShare({ files: [new File([blob], filename, { type: 'image/png' })] })) {
+                try {
+                    await navigator.share({
+                        files: [new File([blob], filename, { type: 'image/png' })],
+                        title: 'Bingo Orakel',
+                        text: 'My Bingo Card'
+                    });
+                    return;
+                } catch (err) {
+                    console.log('Share cancelled or failed:', err);
+                }
+            }
+
+            // Fallback: Use download attribute (desktop) or open in new tab (mobile)
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+
+            // Try standard download first
+            if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) {
+                // On mobile, open in new tab for user to save manually
+                window.open(url, '_blank');
+            } else {
+                // On desktop, trigger download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // Clean up the URL object after a delay
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }, 'image/png');
 
     } catch (error) {
         console.error('Error downloading image:', error);
