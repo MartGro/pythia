@@ -87,6 +87,10 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.bingo-grid.grid-3x3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
 /* Bingo Cells */
 .bingo-cell {
     background-color: var(--cell-bg);
@@ -143,6 +147,40 @@ body {
     flex-wrap: wrap;
     justify-content: center;
     margin-top: var(--spacing-md);
+}
+
+/* Grid Size Selector */
+.grid-size-selector {
+    display: flex;
+    gap: 4px;
+    background-color: #e0e0e0;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.grid-size-btn {
+    min-width: 60px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: transparent;
+    color: var(--text-color);
+    box-shadow: none;
+    font-weight: 600;
+}
+
+.grid-size-btn:hover {
+    background-color: rgba(74, 144, 226, 0.1);
+    transform: none;
+    box-shadow: none;
+}
+
+.grid-size-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
+}
+
+.grid-size-btn.active:hover {
+    background-color: var(--primary-hover);
 }
 
 button {

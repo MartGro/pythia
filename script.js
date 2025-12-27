@@ -1,6 +1,7 @@
 // Store fitty instances globally
 let cellFittyInstances = [];
 let titleFittyInstance = null;
+let currentGridSize = 4; // Default to 4x4
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
@@ -8,10 +9,28 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeBingoApp() {
-    const cells = document.querySelectorAll('.bingo-cell');
     const titleElement = document.getElementById('bingo-title');
     const deleteAllBtn = document.getElementById('delete-all-btn');
     const downloadBtn = document.getElementById('download-btn');
+    const grid3x3Btn = document.getElementById('grid-3x3-btn');
+    const grid4x4Btn = document.getElementById('grid-4x4-btn');
+
+    // Load saved state first to get grid size
+    const savedState = loadBingoState(titleElement);
+    if (savedState && savedState.gridSize) {
+        currentGridSize = savedState.gridSize;
+    }
+
+    // Generate grid with correct size
+    generateGrid(currentGridSize);
+    updateGridSizeButtons();
+
+    // Load saved cell data after grid is generated
+    if (savedState) {
+        loadCellData(savedState);
+    }
+
+    const cells = document.querySelectorAll('.bingo-cell');
 
     // Initialize fitty for cells and title (with error handling)
     try {
@@ -112,6 +131,159 @@ function initializeBingoApp() {
     downloadBtn.addEventListener('click', async () => {
         await downloadAsImage();
     });
+
+    // Grid size buttons
+    grid3x3Btn.addEventListener('click', () => {
+        switchGridSize(3, titleElement);
+    });
+
+    grid4x4Btn.addEventListener('click', () => {
+        switchGridSize(4, titleElement);
+    });
+}
+
+/**
+ * Generate grid with specified size
+ */
+function generateGrid(size) {
+    const grid = document.querySelector('.bingo-grid');
+    grid.innerHTML = ''; // Clear existing cells
+
+    // Update grid class
+    if (size === 3) {
+        grid.classList.add('grid-3x3');
+    } else {
+        grid.classList.remove('grid-3x3');
+    }
+
+    const totalCells = size * size;
+    for (let i = 0; i < totalCells; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'bingo-cell';
+        cell.contentEditable = 'true';
+        cell.setAttribute('role', 'gridcell');
+        cell.setAttribute('aria-label', `Bingo cell ${i + 1} of ${totalCells}`);
+        cell.setAttribute('dir', 'ltr');
+        grid.appendChild(cell);
+    }
+
+    // Clear and re-initialize fitty instances
+    cellFittyInstances = [];
+
+    // Initialize fitty for new cells
+    try {
+        if (typeof fitty !== 'undefined') {
+            const cells = document.querySelectorAll('.bingo-cell');
+            cells.forEach(cell => {
+                const instance = fitty(cell, {
+                    minSize: 8,
+                    maxSize: 40,
+                    multiLine: true,
+                    observeMutations: {
+                        subtree: true,
+                        childList: true,
+                        characterData: true
+                    }
+                });
+                cellFittyInstances.push(instance);
+            });
+        }
+    } catch (error) {
+        console.warn('Fitty.js error:', error);
+    }
+
+    // Add event listeners to new cells
+    const cells = document.querySelectorAll('.bingo-cell');
+    cells.forEach((cell, index) => {
+        cell.addEventListener('input', (e) => {
+            sanitizeContent(e.target);
+            requestAnimationFrame(() => {
+                try {
+                    if (cellFittyInstances[index]) {
+                        cellFittyInstances[index].fit();
+                    }
+                } catch (error) {
+                    console.warn('Fitty error on cell input:', error);
+                }
+            });
+            saveBingoState(document.getElementById('bingo-title'), cells);
+        });
+
+        cell.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+
+        cell.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                e.stopPropagation();
+            }
+        });
+    });
+}
+
+/**
+ * Switch grid size
+ */
+function switchGridSize(newSize, titleElement) {
+    if (newSize === currentGridSize) return;
+
+    const confirmed = window.confirm(
+        `Switch to ${newSize}x${newSize} grid? This will clear all cell content.`
+    );
+
+    if (confirmed) {
+        currentGridSize = newSize;
+        generateGrid(newSize);
+        updateGridSizeButtons();
+
+        const cells = document.querySelectorAll('.bingo-cell');
+        saveBingoState(titleElement, cells);
+    }
+}
+
+/**
+ * Update active state of grid size buttons
+ */
+function updateGridSizeButtons() {
+    const grid3x3Btn = document.getElementById('grid-3x3-btn');
+    const grid4x4Btn = document.getElementById('grid-4x4-btn');
+
+    if (currentGridSize === 3) {
+        grid3x3Btn.classList.add('active');
+        grid4x4Btn.classList.remove('active');
+    } else {
+        grid3x3Btn.classList.remove('active');
+        grid4x4Btn.classList.add('active');
+    }
+}
+
+/**
+ * Load cell data from saved state
+ */
+function loadCellData(state) {
+    if (state.cells && Array.isArray(state.cells)) {
+        const cells = document.querySelectorAll('.bingo-cell');
+        cells.forEach((cell, index) => {
+            if (state.cells[index]) {
+                cell.textContent = state.cells[index];
+            }
+        });
+
+        // Re-fit all cells after loading
+        setTimeout(() => {
+            try {
+                cellFittyInstances.forEach(instance => {
+                    if (instance) {
+                        instance.fit();
+                    }
+                });
+            } catch (error) {
+                console.warn('Fitty error on load:', error);
+            }
+        }, 100);
+    }
 }
 
 /**
@@ -156,7 +328,8 @@ function saveBingoState(titleElement, cells) {
 
     const state = {
         title: title,
-        cells: cellsData
+        cells: cellsData,
+        gridSize: currentGridSize
     };
 
     localStorage.setItem('bingoState', JSON.stringify(state));
@@ -165,7 +338,7 @@ function saveBingoState(titleElement, cells) {
 /**
  * Load bingo state from localStorage
  */
-function loadBingoState(titleElement, cells) {
+function loadBingoState(titleElement) {
     const savedState = localStorage.getItem('bingoState');
 
     if (savedState) {
@@ -177,34 +350,14 @@ function loadBingoState(titleElement, cells) {
                 titleElement.textContent = state.title;
             }
 
-            // Load cells
-            if (state.cells && Array.isArray(state.cells)) {
-                cells.forEach((cell, index) => {
-                    if (state.cells[index]) {
-                        cell.textContent = state.cells[index];
-                    }
-                });
-            }
-
-            // Re-fit all cells after loading
-            setTimeout(() => {
-                try {
-                    cellFittyInstances.forEach(instance => {
-                        if (instance) {
-                            instance.fit();
-                        }
-                    });
-                    if (titleFittyInstance) {
-                        titleFittyInstance.fit();
-                    }
-                } catch (error) {
-                    console.warn('Fitty error on load:', error);
-                }
-            }, 100);
+            return state;
         } catch (error) {
             console.error('Error loading saved state:', error);
+            return null;
         }
     }
+
+    return null;
 }
 
 /**
@@ -238,8 +391,8 @@ function deleteAll(titleElement, cells) {
             console.warn('Fitty error on delete:', error);
         }
 
-        // Clear localStorage
-        localStorage.removeItem('bingoState');
+        // Save empty state (keeps current grid size)
+        saveBingoState(titleElement, cells);
     }
 }
 
@@ -292,6 +445,12 @@ async function downloadAsImage() {
         gridClone.style.height = `${gridSize}px`;
         gridClone.style.maxWidth = 'none';
         gridClone.style.aspectRatio = '1 / 1';
+
+        // Ensure grid layout is preserved
+        gridClone.style.display = 'grid';
+        gridClone.style.gridTemplateColumns = `repeat(${currentGridSize}, 1fr)`;
+        gridClone.style.gap = '4px';
+        gridClone.style.padding = '4px';
 
         captureElement.appendChild(titleClone);
         captureElement.appendChild(gridClone);
