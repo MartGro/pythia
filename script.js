@@ -2,6 +2,122 @@
 let cellFittyInstances = [];
 let titleFittyInstance = null;
 let currentGridSize = 4; // Default to 4x4
+let currentLanguage = 'de'; // Default to German
+
+// Translations
+const translations = {
+    en: {
+        defaultTitle: "NAME's Oracle For 2026",
+        downloadBtn: "Download Image",
+        deleteBtn: "Delete All",
+        cellPlaceholder: "Click to add text",
+        deleteConfirm: "Are you sure you want to delete all text? This cannot be undone.",
+        gridSwitchConfirm: "Switch to {size}x{size} grid? This will clear all cell content.",
+        downloadError: "Failed to download image. Please try again.",
+        ariaTitle: "Bingo card title",
+        ariaDownload: "Download bingo card as PNG image",
+        ariaDelete: "Delete all bingo cell contents and title",
+        ariaGrid: "{size}x{size} Bingo Grid",
+        ariaGridBtn: "Switch to {size}x{size} grid",
+        ariaCell: "Bingo cell {n} of {total}"
+    },
+    de: {
+        defaultTitle: "NAME's Orakel Für 2026",
+        downloadBtn: "Bild Herunterladen",
+        deleteBtn: "Alles Löschen",
+        cellPlaceholder: "Klicken zum Hinzufügen",
+        deleteConfirm: "Möchten Sie wirklich den gesamten Text löschen? Dies kann nicht rückgängig gemacht werden.",
+        gridSwitchConfirm: "Zu {size}x{size} Raster wechseln? Dies löscht alle Zelleninhalte.",
+        downloadError: "Fehler beim Herunterladen des Bildes. Bitte versuchen Sie es erneut.",
+        ariaTitle: "Bingo-Karte Titel",
+        ariaDownload: "Bingo-Karte als PNG-Bild herunterladen",
+        ariaDelete: "Alle Bingo-Zelleninhalte und Titel löschen",
+        ariaGrid: "{size}x{size} Bingo-Raster",
+        ariaGridBtn: "Zu {size}x{size} Raster wechseln",
+        ariaCell: "Bingo-Zelle {n} von {total}"
+    },
+    it: {
+        defaultTitle: "Oracolo di NAME Per Il 2026",
+        downloadBtn: "Scarica Immagine",
+        deleteBtn: "Cancella Tutto",
+        cellPlaceholder: "Clicca per aggiungere testo",
+        deleteConfirm: "Sei sicuro di voler cancellare tutto il testo? Questa azione non può essere annullata.",
+        gridSwitchConfirm: "Passare alla griglia {size}x{size}? Questo cancellerà tutti i contenuti delle celle.",
+        downloadError: "Impossibile scaricare l'immagine. Riprova.",
+        ariaTitle: "Titolo della cartella bingo",
+        ariaDownload: "Scarica la cartella bingo come immagine PNG",
+        ariaDelete: "Cancella tutti i contenuti delle celle e il titolo",
+        ariaGrid: "Griglia Bingo {size}x{size}",
+        ariaGridBtn: "Passa alla griglia {size}x{size}",
+        ariaCell: "Cella bingo {n} di {total}"
+    }
+};
+
+// Get translation
+function t(key, replacements = {}) {
+    let text = translations[currentLanguage][key] || translations['en'][key] || key;
+    Object.keys(replacements).forEach(placeholder => {
+        text = text.replace(`{${placeholder}}`, replacements[placeholder]);
+    });
+    return text;
+}
+
+// Apply translations to UI
+function applyTranslations() {
+    // Update button text
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        element.textContent = t(key);
+    });
+
+    // Update CSS placeholder text
+    document.documentElement.style.setProperty('--placeholder-text', `"${t('cellPlaceholder')}"`);
+
+    // Update ARIA labels
+    document.getElementById('bingo-title').setAttribute('aria-label', t('ariaTitle'));
+    document.getElementById('download-btn').setAttribute('aria-label', t('ariaDownload'));
+    document.getElementById('delete-all-btn').setAttribute('aria-label', t('ariaDelete'));
+
+    const gridAriaLabel = t('ariaGrid', { size: currentGridSize });
+    document.querySelector('.bingo-grid').setAttribute('aria-label', gridAriaLabel);
+
+    // Update grid button ARIA labels
+    document.getElementById('grid-3x3-btn').setAttribute('aria-label', t('ariaGridBtn', { size: 3 }));
+    document.getElementById('grid-4x4-btn').setAttribute('aria-label', t('ariaGridBtn', { size: 4 }));
+
+    // Update cell ARIA labels
+    updateCellAriaLabels();
+}
+
+// Update cell ARIA labels
+function updateCellAriaLabels() {
+    const cells = document.querySelectorAll('.bingo-cell');
+    const total = cells.length;
+    cells.forEach((cell, index) => {
+        cell.setAttribute('aria-label', t('ariaCell', { n: index + 1, total: total }));
+    });
+}
+
+// Update language buttons active state
+function updateLanguageButtons() {
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        if (btn.getAttribute('data-lang') === currentLanguage) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+// Switch language
+function switchLanguage(lang) {
+    currentLanguage = lang;
+    updateLanguageButtons();
+    applyTranslations();
+
+    // Save language preference
+    localStorage.setItem('bingoLanguage', lang);
+}
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,11 +131,21 @@ function initializeBingoApp() {
     const grid3x3Btn = document.getElementById('grid-3x3-btn');
     const grid4x4Btn = document.getElementById('grid-4x4-btn');
 
+    // Load saved language
+    const savedLanguage = localStorage.getItem('bingoLanguage');
+    if (savedLanguage && translations[savedLanguage]) {
+        currentLanguage = savedLanguage;
+    }
+
     // Load saved state first to get grid size
     const savedState = loadBingoState(titleElement);
     if (savedState && savedState.gridSize) {
         currentGridSize = savedState.gridSize;
     }
+
+    // Apply translations
+    updateLanguageButtons();
+    applyTranslations();
 
     // Generate grid with correct size
     generateGrid(currentGridSize);
@@ -85,6 +211,14 @@ function initializeBingoApp() {
     grid4x4Btn.addEventListener('click', () => {
         switchGridSize(4, titleElement);
     });
+
+    // Language buttons
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const lang = btn.getAttribute('data-lang');
+            switchLanguage(lang);
+        });
+    });
 }
 
 /**
@@ -107,7 +241,7 @@ function generateGrid(size) {
         cell.className = 'bingo-cell';
         cell.contentEditable = 'true';
         cell.setAttribute('role', 'gridcell');
-        cell.setAttribute('aria-label', `Bingo cell ${i + 1} of ${totalCells}`);
+        cell.setAttribute('aria-label', t('ariaCell', { n: i + 1, total: totalCells }));
         cell.setAttribute('dir', 'ltr');
         grid.appendChild(cell);
     }
@@ -175,13 +309,14 @@ function switchGridSize(newSize, titleElement) {
     if (newSize === currentGridSize) return;
 
     const confirmed = window.confirm(
-        `Switch to ${newSize}x${newSize} grid? This will clear all cell content.`
+        t('gridSwitchConfirm', { size: newSize })
     );
 
     if (confirmed) {
         currentGridSize = newSize;
         generateGrid(newSize);
         updateGridSizeButtons();
+        applyTranslations(); // Update ARIA labels for new grid size
 
         const cells = document.querySelectorAll('.bingo-cell');
         saveBingoState(titleElement, cells);
@@ -310,12 +445,12 @@ function loadBingoState(titleElement) {
  */
 function deleteAll(titleElement, cells) {
     const confirmed = window.confirm(
-        'Are you sure you want to delete all text? This cannot be undone.'
+        t('deleteConfirm')
     );
 
     if (confirmed) {
-        // Clear title
-        titleElement.textContent = "NAME's Orakel Für 2026";
+        // Clear title and reset to default
+        titleElement.textContent = t('defaultTitle');
 
         // Clear all cells
         cells.forEach(cell => {
@@ -431,7 +566,7 @@ async function downloadAsImage() {
 
     } catch (error) {
         console.error('Error downloading image:', error);
-        alert('Failed to download image. Please try again.');
+        alert(t('downloadError'));
 
         // Make sure controls are visible again
         const controls = document.querySelector('.controls');
