@@ -38,9 +38,6 @@ body {
 
 /* Language Selector */
 .language-selector {
-    position: absolute;
-    top: var(--spacing-sm);
-    right: var(--spacing-sm);
     display: flex;
     gap: 4px;
     background-color: #e0e0e0;
